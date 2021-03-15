@@ -2,8 +2,7 @@ import { AfterViewInit, Component, Inject, NgZone, OnDestroy, PLATFORM_ID } from
 import { isPlatformBrowser } from '@angular/common';
 
 import * as am4core from '@amcharts/amcharts4/core';
-import * as am4charts from '@amcharts/amcharts4/charts';
-import * as am4plugins_forceDirected from '@amcharts/amcharts4/plugins/forceDirected';
+import * as am4plugins_wordCloud from "@amcharts/amcharts4/plugins/wordCloud";
 
 import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 
@@ -14,7 +13,7 @@ import am4themes_animated from '@amcharts/amcharts4/themes/animated';
 })
 
 export class ChartComponent implements AfterViewInit, OnDestroy {
-  private chart: am4plugins_forceDirected.ForceDirectedTree;
+  private chart: am4plugins_wordCloud.WordCloud;
 
   constructor(@Inject(PLATFORM_ID) private platformId, private zone: NgZone) {}
 
@@ -38,119 +37,47 @@ export class ChartComponent implements AfterViewInit, OnDestroy {
   }
 
   chartInit(): void {
-    const chart = am4core.create('chart', am4plugins_forceDirected.ForceDirectedTree);
-    chart.legend = new am4charts.Legend();
+    const chart = am4core.create('chart', am4plugins_wordCloud.WordCloud);
+    const series = chart.series.push(new am4plugins_wordCloud.WordCloudSeries());
 
-    const networkSeries = chart.series.push(new am4plugins_forceDirected.ForceDirectedSeries());
+    series.accuracy = 4;
+    series.step = 15;
+    series.rotationThreshold = 0.7;
+    series.maxCount = 200;
+    series.minWordLength = 2;
+    series.labels.template.margin(4, 4, 4, 4);
+    series.maxFontSize = am4core.percent(30);
 
-    networkSeries.data = this.chartData;
+    series.text = 'Белеет парус одинокой\n' +
+      'В тумане моря голубом!..\n' +
+      'Что ищет он в стране далекой?\n' +
+      'Что кинул он в краю родном?...\n' +
+      '\n' +
+      'Играют волны — ветер свищет,\n' +
+      'И мачта гнется и скрыпит…\n' +
+      'Увы! он счастия не ищет\n' +
+      'И не от счастия бежит!\n' +
+      '\n' +
+      'Под ним струя светлей лазури,\n' +
+      'Над ним луч солнца золотой…\n' +
+      'А он, мятежный, просит бури,\n' +
+      'Как будто в бурях есть покой!\n' +
+      '\n' +
+      '1832 г.';
 
-    networkSeries.dataFields.value = 'value';
-    networkSeries.dataFields.name = 'name';
-    networkSeries.dataFields.children = 'children';
-    networkSeries.nodes.template.tooltipText = '{name}:{value}';
-    networkSeries.nodes.template.fillOpacity = 1;
+    series.colors = new am4core.ColorSet();
+    series.colors.passOptions = {}; // makes it loop
 
-    networkSeries.nodes.template.label.text = '{name}';
-    networkSeries.fontSize = 10;
+    series.angles = [0, -90];
+    series.fontWeight = '700';
 
-    networkSeries.links.template.strokeWidth = 1;
-
-    const hoverState = networkSeries.links.template.states.create('hover');
-    hoverState.properties.strokeWidth = 3;
-    hoverState.properties.strokeOpacity = 1;
-
-    networkSeries.nodes.template.events.on('over', event => {
-      event.target.dataItem.childLinks.each(link => {
-        link.isHover = true;
-      });
-      if (event.target.dataItem.parentLink) {
-        event.target.dataItem.parentLink.isHover = true;
-      }
-
-    });
-
-    networkSeries.nodes.template.events.on('out', event => {
-      event.target.dataItem.childLinks.each(link => {
-        link.isHover = false;
-      });
-      if (event.target.dataItem.parentLink) {
-        event.target.dataItem.parentLink.isHover = false;
-      }
-    });
+    setInterval(() => {
+      series.dataItems
+        .getIndex(Math.round(Math.random() * (series.dataItems.length - 1)))
+        .setValue('value', Math.round(Math.random() * 10));
+    }, 5000);
 
     this.chart = chart;
-  }
-
-  get chartData(): any {
-    return [
-      {
-        name: 'Core',
-        children: [
-          {
-            name: 'First',
-            children: [
-              { name: 'A1', value: 100 },
-              { name: 'A2', value: 60 }
-            ]
-          },
-          {
-            name: 'Second',
-            children: [
-              { name: 'B1', value: 135 },
-              { name: 'B2', value: 98 }
-            ]
-          },
-          {
-            name: 'Third',
-            children: [
-              {
-                name: 'C1',
-                children: [
-                  { name: 'EE1', value: 130 },
-                  { name: 'EE2', value: 87 },
-                  { name: 'EE3', value: 55 }
-                ]
-              },
-              { name: 'C2', value: 148 },
-              {
-                name: 'C3', children: [
-                  { name: 'CC1', value: 53 },
-                  { name: 'CC2', value: 30 }
-                ]
-              },
-              { name: 'C4', value: 26 }
-            ]
-          },
-          {
-            name: 'Fourth',
-            children: [
-              { name: 'D1', value: 415 },
-              { name: 'D2', value: 148 },
-              { name: 'D3', value: 89 }
-            ]
-          },
-          {
-            name: 'Fifth',
-            children: [
-              {
-                name: 'E1',
-                children: [
-                  { name: 'EE1', value: 33 },
-                  { name: 'EE2', value: 40 },
-                  { name: 'EE3', value: 89 }
-                ]
-              },
-              {
-                name: 'E2',
-                value: 148
-              }
-            ]
-          }
-
-        ]
-      }
-    ];
   }
 
   ngOnDestroy(): void {
